@@ -129,7 +129,7 @@
           return;
         }
 
-        const key = event.code || event.keyCode;
+        const key = event.code || event.keyCode; // keyCode is used for older Edge versions
 
         switch (key) {
           case 'ArrowUp':
