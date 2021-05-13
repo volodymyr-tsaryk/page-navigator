@@ -32,7 +32,6 @@
     'input',
     'textarea',
     'select',
-    'button'
   ];
 
   class PageNavigator {
