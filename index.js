@@ -4,6 +4,7 @@
     LINK: 'LINK',
     LANDMARK: 'LANDMARK'
   };
+
   const SELECTORS = {
     [NODE_TYPES.HEADING]: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
     [NODE_TYPES.LINK]: ['a', '[role="link"]'],
@@ -27,6 +28,13 @@
     DOWN: 'DOWN'
   };
 
+  const INPUTS_TO_SKIP = [
+    'input',
+    'textarea',
+    'select',
+    'button'
+  ];
+
   class PageNavigator {
     constructor () {
       this.selectedDirection = DIRECTION.DOWN;
@@ -36,7 +44,8 @@
     }
 
     getNodeType (node) {
-      const types = Object.values(NODE_TYPES);
+      const types = Object.keys(NODE_TYPES).map(key => NODE_TYPES[key]);
+
       return types.find(type => {
         return node.matches(SELECTORS[type].join(', '));
       });
@@ -83,12 +92,19 @@
     }
 
     restorePrevStyles (node) {
-      node.style = node.prevStyles;
+      Object.keys(node.prevStyles).forEach(key => {
+        node.style[key] = node.prevStyles[key];
+      });
       delete node.prevStyles;
     }
 
     setHighlightStyles (node) {
-      node.prevStyles = node.style;
+      node.prevStyles = {
+        outline: node.style.outline || '',
+        backgroundColor: node.style.backgroundColor || '',
+        color: node.style.color || ''
+      };
+
       node.style.outline = '4px dashed #000';
       node.style.backgroundColor = '#fff';
       node.style.color = '#000';
@@ -103,27 +119,38 @@
 
       const { node } = this.getNode(type, this.parsedNodes);
       this.setHighlightStyles(node);
-      node.scrollIntoView({ behavior: 'smooth' });
+      node.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
 
       this.currentNode = node;
     }
 
     subscribeToEvents () {
       document.addEventListener('keydown', event => {
-        switch (event.key.toUpperCase()) {
-          case 'ARROWUP':
+        if (INPUTS_TO_SKIP.includes(event.target.tagName.toLowerCase())) {
+          return;
+        }
+
+        const key = event.code || event.keyCode;
+
+        switch (key) {
+          case 'ArrowUp':
+          case 38:
             this.selectedDirection = DIRECTION.UP;
             break;
-          case 'ARROWDOWN':
+          case 'ArrowDown':
+          case 40:
             this.selectedDirection = DIRECTION.DOWN;
             break;
-          case 'H':
+          case 'KeyH':
+          case 72:
             this.highlightNextNode(NODE_TYPES.HEADING);
             break;
-          case 'L':
+          case 'KeyL':
+          case 76:
             this.highlightNextNode(NODE_TYPES.LINK);
             break;
-          case 'M':
+          case 'KeyM':
+          case 77:
             this.highlightNextNode(NODE_TYPES.LANDMARK);
             break;
         }
